@@ -1,49 +1,49 @@
-const filterByType = (type, ...values) => values.filter(value => typeof value === type),
+const filterByType = (type, ...values) => values.filter(value => typeof value === type), // 11 - Функция из eval, проверяет полученные данные и фильтрует по переданному типу, возвращает массив
 
-	hideAllResponseBlocks = () => {
-		const responseBlocksArray = Array.from(document.querySelectorAll('div.dialog__response-block'));
-		responseBlocksArray.forEach(block => block.style.display = 'none');
+	hideAllResponseBlocks = () => { // 16 - Функция пробегается по всем блокам (успех, ошибка, ничего) и отключает их видимость
+		const responseBlocksArray = Array.from(document.querySelectorAll('div.dialog__response-block')); // 17 - Превращение NodeList с блокками в Array
+		responseBlocksArray.forEach(block => block.style.display = 'none'); // 18 - Перебор всех блоков результата и их отключение через display = none
 	},
 
-	showResponseBlock = (blockSelector, msgText, spanSelector) => {
-		hideAllResponseBlocks();
-		document.querySelector(blockSelector).style.display = 'block';
-		if (spanSelector) {
-			document.querySelector(spanSelector).textContent = msgText;
+	showResponseBlock = (blockSelector, msgText, spanSelector) => { // 14 - Функция проявления блока результатов, получает класс стилизации блока, текстовое сообщение блока и айди для span, в который будет загружен текст
+		hideAllResponseBlocks(); // 15 - Функция, которая прячет все возможные блоки результатов (успех, ошибка, ничего)
+		document.querySelector(blockSelector).style.display = 'block'; // 19 - Получение конкретного блока (успешного, ошибка или ничего) и его "включение"
+		if (spanSelector) { // 20 - Передан ли айди для span? (Может быть не передан в случае отсутствия результатов по причине пустого поля ввода (нечего фильтровать))
+			document.querySelector(spanSelector).textContent = msgText; // 21 - В случае передачи айди получаем span с блока результата и загружаем в него текст с полученными данными по выбранному типу. Конец.
 		}
 	},
 
-	showError = msgText => showResponseBlock('.dialog__response-block_error', msgText, '#error'),
+	showError = msgText => showResponseBlock('.dialog__response-block_error', msgText, '#error'), // Функция объявления ошибки, пойманной catch, передает класс для стилизации блока в цвет ошибки и текст ошибки (Всё плохо)
 
-	showResults = msgText => showResponseBlock('.dialog__response-block_ok', msgText, '#ok'),
+	showResults = msgText => showResponseBlock('.dialog__response-block_ok', msgText, '#ok'), // 13 - Функция объявлении результата запускает функцию проявления блока со строкой фильтрованных данных и классом для стилизации блока (Всё в порядке)
 
-	showNoResults = () => showResponseBlock('.dialog__response-block_no-results'),
+	showNoResults = () => showResponseBlock('.dialog__response-block_no-results'), // Функция проявляет начальный блок, запускается при пустом поле ввода данных (Обычное состояние)
 
-	tryFilterByType = (type, values) => {
-		try {
-			const valuesArray = eval(`filterByType('${type}', ${values})`).join(", ");
-			const alertMsg = (valuesArray.length) ?
-				`Данные с типом ${type}: ${valuesArray}` :
-				`Отсутствуют данные типа ${type}`;
-			showResults(alertMsg);
-		} catch (e) {
-			showError(`Ошибка: ${e}`);
+	tryFilterByType = (type, values) => { // 8 - Запуск функции редактирования блока с результатов с получением типа данных и самих данных
+		try {	// 9 - Помещение фрагмент кода в "защищенную от ошибок" область (в случае некорректных переданных данных)
+			const valuesArray = eval(`filterByType('${type}', ${values})`).join(", "); // 10 - Функция преобразования строки в JS код. В ней запускается функция фильтрации данных, которая уже проверит все полученные данные на переданный тип. После соединяет массив данных запятой для блока результатов.
+			const alertMsg = (valuesArray.length) ? // 11 - Тернарный оператор. Есть ли данные по переданному типу? Приравнивается строка с данными. Нет? Строка насчёт отсутствия данных по такому типу среди пероеданных
+				`Данные с типом ${type}: ${valuesArray}` : // Строка, если массив полученных данных НЕ пустой
+				`Отсутствуют данные типа ${type}`; // Строка, если массив полученных данных пустой
+			showResults(alertMsg); // 12 - Функция вывода блока результата со строкой с данными
+		} catch (e) { // В случае получения некорректных данных eval выдает ошибку и она ловится
+			showError(`Ошибка: ${e}`); // Функция вывода блока с информацией об ошибке
 		}
 	};
 
-const filterButton = document.querySelector('#filter-btn');
+const filterButton = document.querySelector('#filter-btn'); // 1 - Получение кнопки для запуска функций. Начало
 
-filterButton.addEventListener('click', e => {
-	const typeInput = document.querySelector('#type');
-	const dataInput = document.querySelector('#data');
+filterButton.addEventListener('click', e => { // 2 - Накладывание обработчика по клику на полученную кнопку
+	const typeInput = document.querySelector('#type'); // 3 - Получение селекта с выбором типа данных для фильтрации
+	const dataInput = document.querySelector('#data'); // 4 - Получение поля ввода (данные), которое будет подвержено фильтрации
 
-	if (dataInput.value === '') {
-		dataInput.setCustomValidity('Поле не должно быть пустым!');
-		showNoResults();
+	if (dataInput.value === '') { // Проверка, есть ли данные в поле для фильтрации
+		dataInput.setCustomValidity('Поле не должно быть пустым!'); // Появление предупреждения из-за пустой строки
+		showNoResults(); // Вызов функции, проявляещее отсутствие результатов (нечего показывать)
 	} else {
-		dataInput.setCustomValidity('');
-		e.preventDefault();
-		tryFilterByType(typeInput.value.trim(), dataInput.value.trim());
+		dataInput.setCustomValidity(''); // 5 - Очистка предупреждения (если оно было до этого, после пустой строки)
+		e.preventDefault(); // 6 - Отключение стандартного поведения кнопки (в данном случае) (скролл или перезагрузка страницы)
+		tryFilterByType(typeInput.value.trim(), dataInput.value.trim()); // 7 - Передача значений типа данных и самих данных с полей в функцию для редактирования окна результата (получение значений полей с методом для удаления пробелов)
 	}
 });
 
